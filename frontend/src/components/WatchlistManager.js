@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getApiBase } from "./api";
 
 export default function WatchlistManager({ watchlist, onRefresh, windowData }) {
   const [ticker, setTicker] = useState("");
@@ -12,7 +13,7 @@ export default function WatchlistManager({ watchlist, onRefresh, windowData }) {
     if (!symbol) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/watchlist`, {
+      const res = await fetch(`${getApiBase()}/api/watchlist`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ticker: symbol }),
@@ -27,7 +28,7 @@ export default function WatchlistManager({ watchlist, onRefresh, windowData }) {
 
   const removeTicker = async (symbol) => {
     try {
-      await fetch(`/api/watchlist/${symbol}`, { method: "DELETE" });
+      await fetch(`${getApiBase()}/api/watchlist/${symbol}`, { method: "DELETE" });
       onRefresh();
     } catch (err) { console.error(err); }
   };

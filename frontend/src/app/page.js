@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useWebSocket } from "../components/useWebSocket";
+import { getApiBase } from "../components/api";
 import WatchlistManager from "../components/WatchlistManager";
 import SettingsPanel from "../components/SettingsPanel";
 import AlertFeed from "../components/AlertFeed";
@@ -23,21 +24,21 @@ export default function Dashboard() {
 
   const fetchWatchlist = useCallback(async () => {
     try {
-      const res = await fetch("/api/watchlist");
+      const res = await fetch(`${getApiBase()}/api/watchlist`);
       if (res.ok) setWatchlist(await res.json());
     } catch (err) { console.error("fetchWatchlist:", err); }
   }, []);
 
   const fetchAlerts = useCallback(async () => {
     try {
-      const res = await fetch("/api/alerts");
+      const res = await fetch(`${getApiBase()}/api/alerts`);
       if (res.ok) setAlerts(await res.json());
     } catch (err) { console.error("fetchAlerts:", err); }
   }, []);
 
   const fetchStatus = useCallback(async () => {
     try {
-      const res = await fetch("/api/status");
+      const res = await fetch(`${getApiBase()}/api/status`);
       if (res.ok) {
         const data = await res.json();
         setEngineRunning(data.engine_running);

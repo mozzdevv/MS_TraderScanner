@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getApiBase } from "./api";
 
 export default function EngineStatus({ isRunning }) {
   const [loading, setLoading] = useState(false);
@@ -9,7 +10,7 @@ export default function EngineStatus({ isRunning }) {
     setLoading(true);
     try {
       const endpoint = isRunning ? "stop" : "start";
-      await fetch(`/api/engine/${endpoint}`, { method: "POST" });
+      await fetch(`${getApiBase()}/api/engine/${endpoint}`, { method: "POST" });
     } catch (err) { console.error(err); }
     setLoading(false);
   };
