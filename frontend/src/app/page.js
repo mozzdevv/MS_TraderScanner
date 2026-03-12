@@ -7,8 +7,6 @@ import SettingsPanel from "../components/SettingsPanel";
 import AlertFeed from "../components/AlertFeed";
 import EngineStatus from "../components/EngineStatus";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
 export default function Dashboard() {
   const { isConnected, alerts: wsAlerts, engineStatus } = useWebSocket();
   const [watchlist, setWatchlist] = useState([]);
@@ -25,21 +23,21 @@ export default function Dashboard() {
 
   const fetchWatchlist = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/api/watchlist`);
+      const res = await fetch("/api/watchlist");
       if (res.ok) setWatchlist(await res.json());
     } catch (err) { console.error("fetchWatchlist:", err); }
   }, []);
 
   const fetchAlerts = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/api/alerts`);
+      const res = await fetch("/api/alerts");
       if (res.ok) setAlerts(await res.json());
     } catch (err) { console.error("fetchAlerts:", err); }
   }, []);
 
   const fetchStatus = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/api/status`);
+      const res = await fetch("/api/status");
       if (res.ok) {
         const data = await res.json();
         setEngineRunning(data.engine_running);

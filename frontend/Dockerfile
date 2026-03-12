@@ -8,9 +8,6 @@ RUN npm ci
 
 COPY . .
 
-# Set backend URL for the production build
-ENV NEXT_PUBLIC_API_URL=
-ENV NEXT_PUBLIC_WS_URL=
 
 RUN npm run build
 
