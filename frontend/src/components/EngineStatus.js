@@ -4,7 +4,7 @@ import { useState } from "react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-export default function EngineStatus({ isRunning, tickersTracked }) {
+export default function EngineStatus({ isRunning }) {
   const [loading, setLoading] = useState(false);
 
   const toggleEngine = async () => {
@@ -12,30 +12,23 @@ export default function EngineStatus({ isRunning, tickersTracked }) {
     try {
       const endpoint = isRunning ? "stop" : "start";
       await fetch(`${API_URL}/api/engine/${endpoint}`, { method: "POST" });
-    } catch (err) {
-      console.error("Failed to toggle engine:", err);
-    }
+    } catch (err) { console.error(err); }
     setLoading(false);
   };
 
   return (
-    <div className="engine-controls">
-      <div className={`engine-badge ${isRunning ? "running" : "stopped"}`}>
-        <span className="engine-dot" />
-        {isRunning ? "Running" : "Stopped"}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div className={`badge ${isRunning ? "live" : "offline"}`}>
+        <div className="dot" />
+        {isRunning ? "Engine Active" : "Engine Paused"}
       </div>
-      {isRunning && tickersTracked > 0 && (
-        <span className="engine-meta">
-          {tickersTracked} ticker{tickersTracked !== 1 ? "s" : ""}
-        </span>
-      )}
-      <button
-        className={`btn btn-sm ${isRunning ? "btn-danger" : "btn-primary"}`}
+      
+      <button 
+        className={isRunning ? "btn-secondary" : "btn-primary"} 
         onClick={toggleEngine}
         disabled={loading}
-        id="toggle-engine-btn"
       >
-        {loading ? "…" : isRunning ? "Stop" : "Start"}
+        {loading ? "..." : (isRunning ? "Pause" : "Start Engine")}
       </button>
     </div>
   );

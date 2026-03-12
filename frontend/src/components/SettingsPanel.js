@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-export default function SettingsPanel() {
+export default function SettingsPanel({ isOpen, onClose }) {
   const [settings, setSettings] = useState({
     jump_threshold: 10,
     time_window: 60,
@@ -15,16 +15,14 @@ export default function SettingsPanel() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchSettings();
-  }, []);
+    if (isOpen) fetchSettings();
+  }, [isOpen]);
 
   const fetchSettings = async () => {
     try {
       const res = await fetch(`${API_URL}/api/settings`);
       if (res.ok) setSettings(await res.json());
-    } catch (err) {
-      console.error("Failed to load settings:", err);
-    }
+    } catch (err) { console.error("Failed to load settings:", err); }
   };
 
   const saveSettings = async () => {
@@ -42,101 +40,73 @@ export default function SettingsPanel() {
         }),
       });
       if (res.ok) {
-        const data = await res.json();
-        setSettings(data);
         setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
+        setTimeout(() => { setSaved(false); onClose(); }, 750);
       }
-    } catch (err) {
-      console.error("Failed to save settings:", err);
-    }
+    } catch (err) { console.error(err); }
     setLoading(false);
   };
 
+  if (!isOpen) return null;
+
   return (
-    <div className="card">
-      <div className="card-header">
-        <span className="card-title">
-          <span className="icon">⚙️</span>
-          Settings
-        </span>
-      </div>
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <div className="modal-title">Settings</div>
+          <button className="modal-close" onClick={onClose}>✕</button>
+        </div>
+        
+        <div className="modal-body">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="form-group">
+              <label>Threshold (%)</label>
+              <input
+                className="form-input"
+                type="number" step="0.5"
+                value={settings.jump_threshold}
+                onChange={(e) => setSettings({ ...settings, jump_threshold: e.target.value })}
+              />
+            </div>
 
-      <div className="card-inner">
-        <div className="settings-row">
-          <div className="form-group">
-            <label className="form-label" htmlFor="jump-threshold">Threshold (%)</label>
-            <input
-              id="jump-threshold"
-              className="input"
-              type="number"
-              step="0.5"
-              min="1"
-              max="100"
-              value={settings.jump_threshold}
-              onChange={(e) =>
-                setSettings({ ...settings, jump_threshold: e.target.value })
-              }
-            />
+            <div className="form-group">
+              <label>Window (sec)</label>
+              <input
+                className="form-input"
+                type="number" step="5"
+                value={settings.time_window}
+                onChange={(e) => setSettings({ ...settings, time_window: e.target.value })}
+              />
+            </div>
           </div>
 
           <div className="form-group">
-            <label className="form-label" htmlFor="time-window">Window (sec)</label>
+            <label>Poll Interval (sec)</label>
             <input
-              id="time-window"
-              className="input"
-              type="number"
-              step="5"
-              min="10"
-              max="600"
-              value={settings.time_window}
-              onChange={(e) =>
-                setSettings({ ...settings, time_window: e.target.value })
-              }
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label" htmlFor="poll-interval">Poll (sec)</label>
-            <input
-              id="poll-interval"
-              className="input"
-              type="number"
-              step="1"
-              min="3"
-              max="30"
+              className="form-input"
+              type="number" step="1"
               value={settings.poll_interval}
-              onChange={(e) =>
-                setSettings({ ...settings, poll_interval: e.target.value })
-              }
+              onChange={(e) => setSettings({ ...settings, poll_interval: e.target.value })}
             />
           </div>
 
-          <div className="form-group full-width">
-            <label className="form-label" htmlFor="webhook-url">Discord Webhook</label>
+          <div className="form-group">
+            <label>Discord Webhook</label>
             <input
-              id="webhook-url"
-              className="input"
+              className="form-input"
               type="url"
-              placeholder="https://discord.com/api/webhooks/…"
+              placeholder="https://discord.com/api/webhooks/..."
               value={settings.discord_webhook_url}
-              onChange={(e) =>
-                setSettings({ ...settings, discord_webhook_url: e.target.value })
-              }
+              onChange={(e) => setSettings({ ...settings, discord_webhook_url: e.target.value })}
             />
           </div>
         </div>
 
-        <div className="settings-footer">
-          <button
-            className="btn btn-primary btn-sm"
-            onClick={saveSettings}
-            disabled={loading}
-            id="save-settings-btn"
-          >
-            {loading ? "Saving…" : "Save Settings"}
+        <div className="modal-footer">
+          <button className="btn-secondary" onClick={onClose}>Cancel</button>
+          <button className="btn-primary" onClick={saveSettings} disabled={loading}>
+            {loading ? "..." : (saved ? "✓ Saved" : "Save Changes")}
           </button>
-          {saved && <span className="settings-saved">✓ Saved</span>}
         </div>
       </div>
     </div>

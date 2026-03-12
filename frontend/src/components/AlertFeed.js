@@ -1,100 +1,52 @@
 "use client";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
-function formatTime(isoString) {
-  if (!isoString) return "—";
-  try {
-    return new Date(isoString).toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: true,
-    });
-  } catch {
-    return isoString;
-  }
-}
-
-function formatDate(isoString) {
+function formatTimeAgo(isoString) {
   if (!isoString) return "";
-  try {
-    const d = new Date(isoString);
-    const today = new Date();
-    if (d.toDateString() === today.toDateString()) return "Today";
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  } catch {
-    return "";
-  }
+  const diff = Date.now() - new Date(isoString).getTime();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const d = new Date(isoString);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-export default function AlertFeed({ alerts, onClear }) {
-  const clearAlerts = async () => {
-    try {
-      await fetch(`${API_URL}/api/alerts`, { method: "DELETE" });
-      if (onClear) onClear();
-    } catch (err) {
-      console.error("Failed to clear alerts:", err);
-    }
-  };
-
+export default function AlertFeed({ alerts }) {
   return (
     <div className="card">
-      <div className="card-header">
-        <span className="card-title">
-          <span className="icon">🚀</span>
-          Alert Feed
-        </span>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span className="card-meta">
-            {alerts.length} alert{alerts.length !== 1 ? "s" : ""}
-          </span>
-          {alerts.length > 0 && (
-            <button
-              className="btn btn-ghost btn-sm"
-              onClick={clearAlerts}
-              id="clear-alerts-btn"
-            >
-              Clear
-            </button>
-          )}
-        </div>
+      <div className="card-title">
+        <span>Momentum Alerts</span>
+        <span className="card-count">{alerts.length} Total</span>
       </div>
 
-      <div className="alert-feed-wrapper">
-        {alerts.length > 0 && (
-          <div className="alert-table-head">
-            <span>Ticker</span>
-            <span>Jump</span>
-            <span>Price</span>
-            <span>Low</span>
-            <span style={{ textAlign: "right" }}>Time</span>
+      <div className="timeline-container">
+        {alerts.length === 0 ? (
+          <div className="timeline-empty">
+            <div style={{ fontSize: '2rem', opacity: 0.2, marginBottom: 12 }}>📡</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 500, color: 'var(--text-primary)' }}>Scanning for bursts...</div>
+            <div style={{ fontSize: '0.85rem', marginTop: 8, maxWidth: 280 }}>
+              Alerts will appear here when tracked stocks rapidly jump from their window lows.
+            </div>
           </div>
-        )}
-
-        <div className="alert-list">
-          {alerts.length === 0 ? (
-            <div className="alert-empty">
-              <div className="alert-empty-icon">📊</div>
-              <div className="alert-empty-title">No alerts yet</div>
-              <div className="alert-empty-subtitle">
-                Alerts appear here when a tracked stock jumps above your configured threshold within the time window.
+        ) : (
+          alerts.map((alert, i) => (
+            <div key={`${alert.ticker}-${alert.triggered_at}-${i}`} className="timeline-event">
+              <div className="timeline-dot" />
+              <div className="timeline-content">
+                <div className="tl-header">
+                  <span className="tl-ticker">{alert.ticker}</span>
+                  <span className="tl-time">{formatTimeAgo(alert.triggered_at)}</span>
+                </div>
+                <div className="tl-message">
+                  Jumped <span className="tl-highlight">+{alert.jump_pct?.toFixed(2)}%</span> from 
+                  a window low of <span className="tl-highlight">${alert.low_price?.toFixed(2)}</span> to 
+                  reach <span className="tl-highlight">${alert.current_price?.toFixed(2)}</span>.
+                </div>
               </div>
             </div>
-          ) : (
-            alerts.map((alert, i) => (
-              <div key={`${alert.ticker}-${alert.triggered_at}-${i}`} className="alert-row">
-                <span className="alert-ticker">{alert.ticker}</span>
-                <span className="alert-jump">+{alert.jump_pct?.toFixed(2)}%</span>
-                <span className="alert-price">${alert.current_price?.toFixed(4)}</span>
-                <span className="alert-low">${alert.low_price?.toFixed(4)}</span>
-                <span className="alert-time">
-                  {formatDate(alert.triggered_at)} {formatTime(alert.triggered_at)}
-                </span>
-              </div>
-            ))
-          )}
-        </div>
+          ))
+        )}
       </div>
     </div>
   );

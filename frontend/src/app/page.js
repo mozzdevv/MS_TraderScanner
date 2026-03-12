@@ -10,10 +10,11 @@ import EngineStatus from "../components/EngineStatus";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export default function Dashboard() {
-  const { isConnected, alerts: wsAlerts, setAlerts: setWsAlerts, engineStatus } = useWebSocket();
+  const { isConnected, alerts: wsAlerts, engineStatus } = useWebSocket();
   const [watchlist, setWatchlist] = useState([]);
   const [alerts, setAlerts] = useState([]);
   const [engineRunning, setEngineRunning] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Merge WebSocket alerts with DB alerts (deduplicated)
   const allAlerts = [...wsAlerts, ...alerts.filter(
@@ -50,7 +51,7 @@ export default function Dashboard() {
     fetchWatchlist();
     fetchAlerts();
     fetchStatus();
-    const interval = setInterval(() => { fetchStatus(); fetchAlerts(); }, 10000);
+    const interval = setInterval(() => { fetchStatus(); fetchAlerts(); }, 15000);
     return () => clearInterval(interval);
   }, [fetchWatchlist, fetchAlerts, fetchStatus]);
 
@@ -58,62 +59,52 @@ export default function Dashboard() {
     if (engineStatus) setEngineRunning(engineStatus.engine_running);
   }, [engineStatus]);
 
-  const handleClearAlerts = () => { setAlerts([]); setWsAlerts([]); };
-
   const isRunning = engineStatus?.engine_running ?? engineRunning;
   const windowData = engineStatus?.window_data || {};
-  const tickersTracked = engineStatus?.tickers_tracked || watchlist.length;
 
   return (
     <div className="app-container">
       {/* ── Header ─────────────────────────────────────────────────── */}
       <header className="app-header">
-        <h1>
-          <span style={{ fontSize: "1.15rem" }}>⚡</span>
-          <span className="logo-text">Momentum Scanner</span>
-        </h1>
-        <div className="header-controls">
-          <EngineStatus isRunning={isRunning} tickersTracked={tickersTracked} />
-          <div className={`connection-badge ${isConnected ? "connected" : "disconnected"}`}>
-            <span className="connection-dot" />
-            {isConnected ? "Live" : "Offline"}
+        <div className="brand">
+          <span className="brand-logo">≚</span>
+          <span className="brand-name">Momentum Scanner</span>
+        </div>
+        
+        <div className="header-actions">
+          <div className={`badge ${isConnected ? "live" : "offline"}`} style={{ padding: "6px 12px", background: 'transparent', border: '1px solid var(--border-subtle)' }}>
+            <div className="dot" />
+            WS {isConnected ? "Live" : "Offline"}
           </div>
+          <EngineStatus isRunning={isRunning} />
+          
+          <div style={{ width: 1, height: 24, background: 'var(--border-subtle)', margin: '0 8px' }} />
+          
+          <button className="btn-icon" onClick={() => setIsSettingsOpen(true)}>
+            ⚙
+          </button>
         </div>
       </header>
 
-      {/* ── Main grid ──────────────────────────────────────────────── */}
-      <main className="dashboard-grid">
-        {/* Left rail */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* ── Main Dashboard ─────────────────────────────────────────── */}
+      <main className="dashboard-main">
+        {/* Left Column (Watchlist Full Height) */}
+        <div style={{ height: 'calc(100vh - 100px)' }}>
           <WatchlistManager
             watchlist={watchlist}
             onRefresh={fetchWatchlist}
             windowData={windowData}
           />
-          <SettingsPanel />
         </div>
 
-        {/* Right content */}
-        <AlertFeed alerts={allAlerts} onClear={handleClearAlerts} />
+        {/* Right Column (Timeline Feed Full Height) */}
+        <div style={{ height: 'calc(100vh - 100px)' }}>
+          <AlertFeed alerts={allAlerts} />
+        </div>
       </main>
 
-      {/* ── Status bar ─────────────────────────────────────────────── */}
-      <footer className="status-bar">
-        <div className="status-info">
-          <span className="status-item">
-            <span className={`status-dot ${isConnected ? "ok" : "err"}`} />
-            WS {isConnected ? "Connected" : "Disconnected"}
-          </span>
-          <span className="status-item">
-            <span className={`status-dot ${isRunning ? "ok" : "err"}`} />
-            Engine {isRunning ? "On" : "Off"}
-          </span>
-          <span className="status-item">
-            {watchlist.length} tickers · {allAlerts.length} alerts
-          </span>
-        </div>
-        <span>v1.0</span>
-      </footer>
+      {/* ── Modals ─────────────────────────────────────────────────── */}
+      <SettingsPanel isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </div>
   );
 }
