@@ -183,8 +183,8 @@ docker compose version  # Should print Docker Compose v2+
 
 ```bash
 # Clone your repo (replace with your actual repo URL)
-git clone https://github.com/YOUR_USERNAME/TradingScanner.git
-cd TradingScanner
+git clone https://github.com/mozzdevv/MS_TraderScanner.git
+cd MS_TraderScanner 
 ```
 
 ---
