@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000/ws";
 const RECONNECT_DELAY = 3000;
 
 export function useWebSocket() {
@@ -19,7 +18,9 @@ export function useWebSocket() {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
     try {
-      const ws = new WebSocket(WS_URL);
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const targetUrl = `${protocol}//${window.location.host}/ws`;
+      const ws = new WebSocket(targetUrl);
 
       ws.onopen = () => {
         setIsConnected(true);

@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
 export default function WatchlistManager({ watchlist, onRefresh, windowData }) {
   const [ticker, setTicker] = useState("");
   const [loading, setLoading] = useState(false);
@@ -14,7 +12,7 @@ export default function WatchlistManager({ watchlist, onRefresh, windowData }) {
     if (!symbol) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/watchlist`, {
+      const res = await fetch(`/api/watchlist`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ticker: symbol }),
@@ -29,7 +27,7 @@ export default function WatchlistManager({ watchlist, onRefresh, windowData }) {
 
   const removeTicker = async (symbol) => {
     try {
-      await fetch(`${API_URL}/api/watchlist/${symbol}`, { method: "DELETE" });
+      await fetch(`/api/watchlist/${symbol}`, { method: "DELETE" });
       onRefresh();
     } catch (err) { console.error(err); }
   };

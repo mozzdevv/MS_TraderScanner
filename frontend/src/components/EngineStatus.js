@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
 export default function EngineStatus({ isRunning }) {
   const [loading, setLoading] = useState(false);
 
@@ -11,7 +9,7 @@ export default function EngineStatus({ isRunning }) {
     setLoading(true);
     try {
       const endpoint = isRunning ? "stop" : "start";
-      await fetch(`${API_URL}/api/engine/${endpoint}`, { method: "POST" });
+      await fetch(`/api/engine/${endpoint}`, { method: "POST" });
     } catch (err) { console.error(err); }
     setLoading(false);
   };

@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from "react";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
 export default function SettingsPanel({ isOpen, onClose }) {
   const [settings, setSettings] = useState({
     jump_threshold: 10,
@@ -20,7 +18,7 @@ export default function SettingsPanel({ isOpen, onClose }) {
 
   const fetchSettings = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/settings`);
+      const res = await fetch(`/api/settings`);
       if (res.ok) setSettings(await res.json());
     } catch (err) { console.error("Failed to load settings:", err); }
   };
@@ -29,7 +27,7 @@ export default function SettingsPanel({ isOpen, onClose }) {
     setLoading(true);
     setSaved(false);
     try {
-      const res = await fetch(`${API_URL}/api/settings`, {
+      const res = await fetch(`/api/settings`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
