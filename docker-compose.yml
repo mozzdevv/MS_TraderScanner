@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+  # ── Backend (FastAPI + yfinance polling engine) ──────────────────
+  backend:
+    build: ./backend
+    container_name: scanner-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - scanner-data:/app/data
+    environment:
+      - DB_PATH=/app/data/scanner.db
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/status')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ── Frontend (Next.js dashboard) ────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:8000
+        - NEXT_PUBLIC_WS_URL=ws://localhost:8000/ws
+    container_name: scanner-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  scanner-data:
+    driver: local
