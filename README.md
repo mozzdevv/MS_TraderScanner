@@ -307,7 +307,7 @@ docker compose logs --tail=100 backend
 When you push code changes to your repo:
 
 ```bash
-cd ~/TradingScanner
+cd ~/MS_TraderScanner
 
 # Pull latest code
 git pull origin main
