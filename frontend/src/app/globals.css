@@ -422,3 +422,93 @@ body {
 
 @keyframes fadeIn { to { opacity: 1; } }
 @keyframes popIn { to { transform: scale(1); } }
+
+/* ──────────────────────────────────────────────────────────────────
+   RESPONSIVE DESIGN (MOBILE & TABLET)
+   ────────────────────────────────────────────────────────────────── */
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dashboard-column {
+  height: calc(100vh - 100px);
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  /* Let the app scroll naturally on mobile */
+  .app-container {
+    height: auto;
+    min-height: 100vh;
+    overflow-y: auto;
+  }
+  
+  /* Header wraps elements nicely */
+  .app-header {
+    flex-wrap: wrap;
+    padding: 16px;
+    gap: 16px;
+  }
+  
+  .brand-name {
+    font-size: 1.05rem;
+  }
+  
+  .header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .header-controls {
+    flex-wrap: wrap;
+  }
+  
+  .header-divider {
+    display: none; /* Hide the vertical divider on mobile */
+  }
+
+  /* Stack dashboard columns */
+  .dashboard-main {
+    grid-template-columns: 1fr;
+    padding: 0 16px 16px;
+    gap: 16px;
+    height: auto;
+    overflow: visible;
+  }
+  
+  /* Let columns determine their own height initially, but scroll if too long */
+  .dashboard-column {
+    height: auto;
+    min-height: 350px;
+    overflow: visible;
+  }
+
+  /* Internal scrolling bounds for stacked mobile views */
+  .timeline-container {
+    max-height: 500px;
+    padding: 0 20px 24px 16px;
+  }
+  
+  .watchlist-container {
+    max-height: 400px;
+    padding: 0 8px 20px;
+  }
+
+  /* Settings modal shrinks to fit screen */
+  .modal-content {
+    width: calc(100vw - 32px);
+    margin: 0 auto;
+  }
+  
+  /* Stack grid form elements in settings */
+  .modal-body > div[style*="grid"] {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .form-input {
+    font-size: 16px; /* Prevents iOS auto-zoom on focus */
+  }
+}

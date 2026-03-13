@@ -71,13 +71,15 @@ export default function Dashboard() {
         </div>
         
         <div className="header-actions">
-          <div className={`badge ${isConnected ? "live" : "offline"}`} style={{ padding: "6px 12px", background: 'transparent', border: '1px solid var(--border-subtle)' }}>
-            <div className="dot" />
-            WS {isConnected ? "Live" : "Offline"}
+          <div className="header-controls">
+            <div className={`badge ${isConnected ? "live" : "offline"}`} style={{ padding: "6px 12px", background: 'transparent', border: '1px solid var(--border-subtle)' }}>
+              <div className="dot" />
+              WS {isConnected ? "Live" : "Offline"}
+            </div>
+            <EngineStatus isRunning={isRunning} />
           </div>
-          <EngineStatus isRunning={isRunning} />
           
-          <div style={{ width: 1, height: 24, background: 'var(--border-subtle)', margin: '0 8px' }} />
+          <div className="header-divider" style={{ width: 1, height: 24, background: 'var(--border-subtle)', margin: '0 8px' }} />
           
           <button className="btn-icon" onClick={() => setIsSettingsOpen(true)}>
             ⚙
@@ -87,8 +89,8 @@ export default function Dashboard() {
 
       {/* ── Main Dashboard ─────────────────────────────────────────── */}
       <main className="dashboard-main">
-        {/* Left Column (Watchlist Full Height) */}
-        <div style={{ height: 'calc(100vh - 100px)' }}>
+        {/* Left Column (Watchlist) */}
+        <div className="dashboard-column">
           <WatchlistManager
             watchlist={watchlist}
             onRefresh={fetchWatchlist}
@@ -96,8 +98,8 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* Right Column (Timeline Feed Full Height) */}
-        <div style={{ height: 'calc(100vh - 100px)' }}>
+        {/* Right Column (Timeline Feed) */}
+        <div className="dashboard-column">
           <AlertFeed alerts={allAlerts} />
         </div>
       </main>
