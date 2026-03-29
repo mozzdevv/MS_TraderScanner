@@ -1,5 +1,6 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -8,15 +9,18 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "Stock Momentum Scanner",
+  title: "Signal Scanner",
   description:
-    "Real-time stock momentum detection and alerting dashboard. Track rapid price jumps on US stocks and receive Discord notifications.",
+    "Real-time stock momentum detection and alerting dashboard. Track rapid price jumps on US stocks using Polygon.io data.",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={inter.variable}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <SpeedInsights />
+      </body>
     </html>
   );
 }
