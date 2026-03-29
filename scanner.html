@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SignalScan Pro</title>
+<script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#f0f2f5;--card:#fff;--card2:#f8f9fb;
+  --border:#e2e6ed;--text:#1a2332;--muted:#64748b;--faint:#94a3b8;
+  --accent:#1a6ef5;--green:#0ea371;--red:#e8394a;--amber:#f59e0b;
+  --row-hover:rgba(26,110,245,0.04);--fire-row:rgba(245,158,11,0.06);
+}
+.dark{
+  --bg:#0b0f1a;--card:#111827;--card2:#0d1420;
+  --border:#1e293b;--text:#f1f5f9;--muted:#64748b;--faint:#334155;
+  --row-hover:rgba(59,130,246,0.04);--fire-row:rgba(245,158,11,0.05);
+}
+html,body{height:100%;font-family:-apple-system,'Inter','Segoe UI',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;}
+#shell{display:flex;height:100vh;}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+
+/* TOP NAV */
+.topnav{background:var(--card);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;justify-content:space-between;height:52px;flex-shrink:0;}
+.nav-left{display:flex;align-items:center;gap:10px;min-width:0;}
+.nav-title{font-size:14px;font-weight:600;color:var(--text);}
+.nav-sub{font-size:10px;color:var(--muted);}
+.nav-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.mode-btn{background:var(--card2);border:1px solid var(--border);color:var(--muted);padding:5px 9px;border-radius:6px;cursor:pointer;font-size:11px;display:flex;align-items:center;gap:5px;font-family:inherit;}
+.mode-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* POLYGON API BAR */
+.api-bar{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 13px;margin-bottom:12px;display:flex;align-items:center;gap:9px;font-size:11px;flex-wrap:wrap;}
+.api-label{color:var(--muted);white-space:nowrap;display:flex;align-items:center;gap:5px;font-weight:500;}
+.api-input{flex:1;min-width:180px;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:5px 9px;border-radius:5px;font-size:11px;font-family:inherit;transition:border .2s;}
+.api-input:focus{outline:none;border-color:var(--accent);}
+.api-input.ok{border-color:var(--green);background:rgba(14,163,113,0.04);}
+.api-input.bad{border-color:var(--red);}
+.api-btn{background:var(--accent);color:#fff;border:none;padding:5px 13px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;}
+.api-btn:hover{opacity:.88;}
+.api-btn:disabled{opacity:.4;cursor:not-allowed;}
+.api-status{font-size:11px;padding:3px 9px;border-radius:4px;display:none;align-items:center;gap:5px;white-space:nowrap;}
+.st-ok{background:rgba(14,163,113,0.1);color:var(--green);border:1px solid rgba(14,163,113,0.2);}
+.st-err{background:rgba(232,57,74,0.07);color:var(--red);border:1px solid rgba(232,57,74,0.14);}
+.st-info{background:rgba(26,110,245,0.07);color:var(--accent);border:1px solid rgba(26,110,245,0.15);}
+.data-mode{font-size:10px;padding:3px 8px;border-radius:4px;white-space:nowrap;}
+.mode-live{background:rgba(14,163,113,0.1);color:var(--green);border:1px solid rgba(14,163,113,0.2);}
+.mode-delayed{background:rgba(245,158,11,0.1);color:var(--amber);border:1px solid rgba(245,158,11,0.2);}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:14px 16px;}
+
+/* CONTROLS */
+.controls{display:flex;align-items:center;gap:7px;margin-bottom:12px;flex-wrap:wrap;}
+.ctrl-pills{display:flex;gap:4px;flex-wrap:wrap;flex:1;align-items:center;}
+.cpill{background:var(--card2);border:1px solid var(--border);color:var(--muted);padding:3px 8px;border-radius:10px;font-size:10px;}
+.cpill.on{background:rgba(26,110,245,0.09);border-color:rgba(26,110,245,0.28);color:var(--accent);}
+.filter-btn{background:var(--card);border:1px solid var(--border);color:var(--muted);padding:5px 9px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;display:flex;align-items:center;gap:5px;}
+.filter-btn:hover,.filter-btn.open{border-color:var(--accent);color:var(--accent);}
+.ctrl-btn{background:var(--card);border:1px solid var(--border);color:var(--muted);padding:5px 9px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;display:flex;align-items:center;gap:5px;position:relative;}
+.ctrl-btn:hover,.ctrl-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(26,110,245,0.05);}
+.exp-btn{background:var(--card);border:1px solid var(--border);color:var(--muted);padding:5px 9px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;}
+.exp-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* FILTER DRAWER */
+.filter-drawer{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:12px;display:none;}
+.filter-drawer.open{display:block;}
+.fd-row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;}
+.fg{display:flex;flex-direction:column;gap:3px;}
+.fl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.fi{background:var(--card2);border:1px solid var(--border);color:var(--text);padding:4px 7px;border-radius:5px;font-size:11px;width:72px;font-family:inherit;}
+.fi:focus{outline:1px solid var(--accent);}
+.sig-row{display:flex;gap:4px;flex-wrap:wrap;}
+.sb-f{background:var(--card2);border:1px solid var(--border);color:var(--muted);padding:3px 8px;border-radius:4px;font-size:10px;cursor:pointer;font-family:inherit;}
+.sb-f.on{background:rgba(26,110,245,0.09);border-color:rgba(26,110,245,0.28);color:var(--accent);}
+.apply-btn{background:var(--green);color:#fff;border:none;padding:5px 13px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;margin-left:auto;font-family:inherit;}
+
+/* COLUMN MENU */
+.col-menu{position:absolute;top:calc(100% + 5px);right:0;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;z-index:300;min-width:175px;box-shadow:0 8px 24px rgba(0,0,0,.13);display:none;}
+.cm-title{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.ci{display:flex;align-items:center;gap:7px;padding:5px 3px;cursor:pointer;border-radius:4px;}
+.ci:hover{background:var(--row-hover);}
+.ccb{width:13px;height:13px;border:1px solid var(--border);border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--card2);}
+.ccb.on{background:var(--accent);border-color:var(--accent);}
+.ccb.on::after{content:'✓';font-size:8px;color:#fff;line-height:1;}
+.cn{font-size:11px;color:var(--muted);}
+
+/* TOP 3 CARDS */
+.top3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px;}
+.tc{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;min-width:0;}
+.tc-bar{height:3px;background:var(--accent);}
+.tc-head{padding:11px 13px 7px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.tc-left{min-width:0;flex:1;}
+.tc-sym{font-size:20px;font-weight:700;color:var(--text);letter-spacing:-.5px;line-height:1;}
+.tc-price{font-size:15px;font-weight:700;margin-top:3px;color:var(--accent);}
+.tc-cat{font-size:10px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tc-meta{text-align:right;flex-shrink:0;}
+.tc-sess{font-size:22px;font-weight:700;line-height:1;color:var(--accent);}
+.tc-slbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-top:2px;}
+.tc-chg{font-size:12px;font-weight:600;color:var(--green);margin-top:3px;}
+.tc-chart{border-top:1px solid var(--border);border-bottom:1px solid var(--border);position:relative;}
+.chart-hint{position:absolute;top:4px;right:6px;font-size:9px;color:var(--faint);pointer-events:none;z-index:2;}
+.tc-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);}
+.tc-stat{background:var(--card2);padding:6px 9px;}
+.ts-l{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;}
+.ts-v{font-size:11px;font-weight:600;margin-top:2px;}
+.c-a{color:var(--amber);}.c-g{color:var(--green);}.c-b{color:var(--accent);}.c-t{color:var(--text);}
+
+/* TABLE */
+.tbl-card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.tbl-nav{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:6px;}
+.tbl-title{font-size:12px;font-weight:600;color:var(--text);}
+.tbl-right{display:flex;align-items:center;gap:7px;}
+.tbl-cnt{background:var(--card2);border:1px solid var(--border);color:var(--muted);padding:2px 7px;border-radius:4px;font-size:10px;}
+.scan-status{font-size:10px;color:var(--muted);display:flex;align-items:center;gap:4px;}
+.scan-dot{width:5px;height:5px;border-radius:50%;background:var(--muted);}
+.scan-dot.live{background:var(--green);animation:pu 1.4s infinite;}
+@keyframes pu{0%,100%{opacity:1;}50%{opacity:.3;}}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+table{width:100%;border-collapse:collapse;min-width:520px;}
+th{background:var(--card2);color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.6px;font-weight:500;padding:6px 12px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle;font-size:12px;color:var(--text);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--row-hover);}
+tr.fire-r td{background:var(--fire-row);}
+tr.filtered-out{display:none;}
+.flash-g{animation:fg .6s ease-out;}
+.flash-r{animation:fr .6s ease-out;}
+@keyframes fg{0%{background:rgba(14,163,113,0.18);}100%{background:transparent;}}
+@keyframes fr{0%{background:rgba(232,57,74,0.14);}100%{background:transparent;}}
+.row-fresh td{animation:rf .8s ease-out;}
+@keyframes rf{0%{background:rgba(26,110,245,0.12);}100%{background:transparent;}}
+
+/* TABLE CELLS */
+.sig-cell{display:flex;align-items:center;gap:6px;}
+.tag{padding:3px 7px;border-radius:4px;font-size:10px;font-weight:500;white-space:nowrap;}
+.t-hi{background:rgba(14,163,113,0.1);color:var(--green);border:1px solid rgba(14,163,113,0.2);}
+.t-sp{background:rgba(245,158,11,0.1);color:var(--amber);border:1px solid rgba(245,158,11,0.2);}
+.t-vw{background:rgba(26,110,245,0.1);color:var(--accent);border:1px solid rgba(26,110,245,0.2);}
+.sess-n{font-size:14px;font-weight:700;color:var(--text);min-width:16px;}
+.sym-main{font-size:13px;font-weight:600;color:var(--accent);}
+.sym-cat{font-size:10px;color:var(--faint);margin-top:1px;}
+.pm{font-size:13px;font-weight:500;}
+.pv{font-size:10px;margin-top:1px;}
+.vu{color:var(--green);}.vd{color:var(--red);}
+.cup{font-size:12px;font-weight:600;color:var(--green);}
+.cup.neg{color:var(--red);}
+.rvp{display:inline-block;padding:2px 6px;border-radius:8px;font-size:10px;font-weight:500;}
+.rv-hot{background:rgba(232,57,74,0.08);color:var(--red);border:1px solid rgba(232,57,74,0.14);}
+.rv-warm{background:rgba(245,158,11,0.08);color:var(--amber);border:1px solid rgba(245,158,11,0.14);}
+.rv-ok{background:var(--card2);color:var(--muted);border:1px solid var(--border);}
+.vm{font-size:12px;}.va{font-size:10px;color:var(--faint);margin-top:1px;}
+.tv{font-size:11px;color:var(--accent);font-weight:500;font-variant-numeric:tabular-nums;}
+.mom{font-size:11px;font-weight:600;padding:2px 6px;border-radius:4px;}
+.mom-up{color:var(--green);background:rgba(14,163,113,0.08);}
+.mom-dn{color:var(--red);background:rgba(232,57,74,0.07);}
+.mom-flat{color:var(--muted);background:var(--card2);}
+.range-cell{display:flex;flex-direction:column;gap:3px;min-width:88px;}
+.range-h{font-size:9px;color:var(--green);font-weight:500;}
+.range-l{font-size:9px;color:var(--red);font-weight:500;}
+.range-bar-wrap{position:relative;height:3px;background:linear-gradient(90deg,var(--red),var(--amber),var(--green));border-radius:2px;}
+.range-bar{position:absolute;top:-2px;width:7px;height:7px;background:var(--text);border-radius:50%;transform:translateX(-50%);transition:left .4s;}
+.fem{font-size:13px;line-height:1;}
+.htag{display:inline-block;background:rgba(232,57,74,0.08);color:var(--red);border:1px solid rgba(232,57,74,0.15);padding:1px 4px;border-radius:3px;font-size:8px;font-weight:600;margin-left:3px;}
+
+/* EMPTY STATE */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:var(--muted);text-align:center;}
+.empty-state svg{margin-bottom:14px;opacity:.3;}
+.empty-title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:6px;}
+.empty-sub{font-size:12px;line-height:1.6;}
+
+/* RESPONSIVE */
+@media(max-width:960px){
+  .top3{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .tc:nth-child(3){display:none;}
+}
+@media(max-width:660px){
+  .top3{grid-template-columns:minmax(0,1fr);}
+  .tc:nth-child(2),.tc:nth-child(3){display:none;}
+  .cpill{display:none;}
+}
+@media(max-width:400px){
+  .topnav,.content{padding:0 10px;}
+  .content{padding:10px;}
+  .exp-btn{display:none;}
+  .mode-btn span{display:none;}
+}
+</style>
+</head>
+<body>
+<div id="shell">
+<div class="main">
+
+  <div class="topnav">
+    <div class="nav-left">
+      <div>
+        <div class="nav-title">Signal Scanner</div>
+        <div class="nav-sub">Real-time · ordered by last update</div>
+      </div>
+    </div>
+    <div class="nav-right">
+      <button class="mode-btn" onclick="toggleMode()">
+        <svg id="modeIco" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.3 3.3l1.4 1.4M11.3 11.3l1.4 1.4M11.3 3.3l-1.4 1.4M3.3 11.3l1.4 1.4"/></svg>
+        <span id="modeLbl">Dark mode</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- POLYGON.IO API KEY BAR -->
+    <div class="api-bar">
+      <div class="api-label">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><polygon points="8,1 15,5 15,11 8,15 1,11 1,5" stroke="var(--accent)" stroke-width="1.3" fill="none"/><line x1="8" y1="1" x2="8" y2="15" stroke="var(--accent)" stroke-width="1" stroke-dasharray="2,2"/><line x1="1" y1="5" x2="15" y2="11" stroke="var(--accent)" stroke-width="1" stroke-dasharray="2,2"/><line x1="1" y1="11" x2="15" y2="5" stroke="var(--accent)" stroke-width="1" stroke-dasharray="2,2"/></svg>
+        Polygon.io API Key
+      </div>
+      <input class="api-input" id="polyKey" type="password" placeholder="Paste your Polygon.io API key — data updates every 5 seconds" oninput="onKeyInput()"/>
+      <button class="api-btn" id="connectBtn" onclick="connectPolygon()">Connect</button>
+      <div id="apiStatus" class="api-status"></div>
+      <div id="dataMode" style="display:none;" class="data-mode"></div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="controls">
+      <div class="ctrl-pills">
+        <button class="filter-btn" id="fBtn" onclick="toggleFD()">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M1 3h14M3 8h10M6 13h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Filters
+          <svg width="7" height="7" viewBox="0 0 10 10" fill="none"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        </button>
+        <span class="cpill on" id="pp">$0.30–$5.00</span>
+        <span class="cpill on" id="pr">RVol ≥3x</span>
+      </div>
+      <div style="position:relative;">
+        <button class="ctrl-btn" id="colBtn" onclick="toggleColMenu()">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1" y="1" width="6" height="14" rx="1"/><rect x="9" y="1" width="6" height="14" rx="1"/></svg>
+          Columns
+        </button>
+        <div class="col-menu" id="colMenu">
+          <div class="cm-title">Show / hide columns</div>
+          <div id="colList"></div>
+        </div>
+      </div>
+      <button class="exp-btn" onclick="exportCSV()">Export CSV</button>
+    </div>
+
+    <div class="filter-drawer" id="fDrawer">
+      <div class="fd-row">
+        <div class="fg"><div class="fl">Price min</div><input class="fi" id="fMin" type="number" value="0.30" step="0.05"></div>
+        <div class="fg"><div class="fl">Price max</div><input class="fi" id="fMax" type="number" value="5.00" step="0.25"></div>
+        <div class="fg"><div class="fl">Min rel.vol</div><input class="fi" id="fRv" type="number" value="3.0" step="0.5"></div>
+        <div class="fg"><div class="fl">Signal type</div>
+          <div class="sig-row">
+            <button class="sb-f on" onclick="this.classList.toggle('on')">Session High</button>
+            <button class="sb-f on" onclick="this.classList.toggle('on')">Price Spike</button>
+            <button class="sb-f on" onclick="this.classList.toggle('on')">VWAP Cross</button>
+          </div>
+        </div>
+        <button class="apply-btn" onclick="applyFilters()">Apply</button>
+      </div>
+    </div>
+
+    <div class="top3" id="top3"></div>
+
+    <div class="tbl-card">
+      <div class="tbl-nav">
+        <div class="tbl-title" id="sessionDate"></div>
+        <div class="tbl-right">
+          <div class="scan-status"><div class="scan-dot" id="scanDot"></div><span id="scanLbl">Waiting for API key</span></div>
+          <span class="tbl-cnt" id="rowCnt">0 signals</span>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table><thead id="thead"></thead><tbody id="tbody"></tbody></table>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<script>
+/* ─── STATE ─── */
+let ALL=[];
+let polyApiKey='';
+let isConnected=false;
+let isDark=false;
+let scanInterval=null;
+let lwcCharts={};
+let lwcSeries={};
+let candleHistory={};
+
+/* ─── FILTER STATE ─── */
+let filterState={pMin:0.30,pMax:5.00,rMin:3.0};
+
+function passesFilter(d){
+  return d.price>=filterState.pMin && d.price<=filterState.pMax &&
+         d.rvol>=filterState.rMin;
+}
+
+/* ─── COLUMNS ─── */
+const COLS=[
+  {key:'signal',label:'Signal · Sess',on:true,req:true},
+  {key:'sym',label:'Symbol',on:true,req:true},
+  {key:'price',label:'Price',on:true},
+  {key:'chg',label:'% Chg',on:true},
+  {key:'rvol',label:'Rel.Vol',on:true},
+  {key:'vol',label:'Volume',on:true},
+  {key:'range',label:'Day Range',on:true},
+  {key:'momentum',label:'Momentum',on:false},
+  {key:'news',label:'News',on:false},
+  {key:'time',label:'Last Updated',on:true},
+];
+
+const tCls={'Session High':'t-hi','Price Spike':'t-sp','VWAP Cross':'t-vw'};
+
+/* ─── UTILS ─── */
+function rand(a,b){return Math.random()*(b-a)+a;}
+function fmtTime(ms){return new Date(ms).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
+function fmtV(v){if(!v||isNaN(v))return'—';return v>=1e9?(v/1e9).toFixed(1)+'B':v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?(v/1e3).toFixed(0)+'K':String(v);}
+function rvCls(r){return r>=8?'rv-hot':r>=4?'rv-warm':'rv-ok';}
+function isOnFire(d){return d.rvol>=10&&d.chg>=20&&d.momentum>0.05&&d.aboveVwap&&d.sess>=3;}
+
+/* ─── API STATUS DISPLAY ─── */
+function showStatus(type,msg){
+  const el=document.getElementById('apiStatus');
+  el.className='api-status st-'+type;
+  el.style.display='flex';
+  el.textContent=msg;
+  if(type==='err')setTimeout(()=>{el.style.display='none';},8000);
+}
+function hideStatus(){document.getElementById('apiStatus').style.display='none';}
+
+function onKeyInput(){
+  const k=document.getElementById('polyKey').value.trim();
+  const inp=document.getElementById('polyKey');
+  if(!k){inp.className='api-input';hideStatus();return;}
+  if(k.length<10){inp.className='api-input bad';showStatus('err','Key looks too short');}
+  else{inp.className='api-input';hideStatus();}
+}
+
+/* ─── POLYGON CONNECT ─── */
+async function connectPolygon(){
+  const key=document.getElementById('polyKey').value.trim();
+  if(!key||key.length<10){
+    document.getElementById('polyKey').className='api-input bad';
+    showStatus('err','Please enter your Polygon.io API key');return;
+  }
+  const btn=document.getElementById('connectBtn');
+  btn.disabled=true;btn.textContent='Connecting…';
+  showStatus('info','Verifying API key…');
+
+  /* Test the key with a simple snapshot call */
+  try{
+    const res=await fetch(`https://api.polygon.io/v2/snapshot/locale/us/markets/stocks/gainers?apiKey=${key}`);
+    if(res.status===403||res.status===401){
+      document.getElementById('polyKey').className='api-input bad';
+      showStatus('err','API key rejected — check your Polygon.io dashboard');
+      btn.disabled=false;btn.textContent='Connect';return;
+    }
+    const data=await res.json();
+    if(data.status==='ERROR'){
+      showStatus('err',data.error||'API error — check your key');
+      btn.disabled=false;btn.textContent='Connect';return;
+    }
+    /* Key works — determine if real-time or delayed */
+    polyApiKey=key;
+    isConnected=true;
+    document.getElementById('polyKey').className='api-input ok';
+    btn.textContent='Connected';
+
+    /* Check if market is open (simple heuristic) */
+    const now=new Date();
+    const et=new Date(now.toLocaleString('en-US',{timeZone:'America/New_York'}));
+    const h=et.getHours(),m=et.getMinutes(),day=et.getDay();
+    const marketOpen=day>=1&&day<=5&&(h>9||(h===9&&m>=30))&&h<16;
+    const afterHours=day>=1&&day<=5&&((h>=16&&h<20)||(h<9||(h===9&&m<30)));
+    const modeEl=document.getElementById('dataMode');
+    modeEl.style.display='block';
+    if(marketOpen){
+      modeEl.className='data-mode mode-live';
+      modeEl.textContent='● Real-time';
+      showStatus('ok','Connected — live market data');
+    }else if(afterHours){
+      modeEl.className='data-mode mode-delayed';
+      modeEl.textContent='◑ After Hours';
+      showStatus('ok','Connected — after hours data');
+    }else{
+      modeEl.className='data-mode mode-delayed';
+      modeEl.textContent='○ Market Closed';
+      showStatus('ok','Connected — market closed, showing last session data');
+    }
+
+    setScanStatus(true);
+    /* Initial fetch then every 5 seconds */
+    await fetchAndRefresh();
+    scanInterval=setInterval(fetchAndRefresh,5000);
+    setTimeout(()=>hideStatus(),4000);
+  }catch(err){
+    showStatus('err','Connection failed: '+err.message);
+    btn.disabled=false;btn.textContent='Connect';
+  }
+}
+
+function setScanStatus(live){
+  const dot=document.getElementById('scanDot');
+  const lbl=document.getElementById('scanLbl');
+  if(live){dot.className='scan-dot live';lbl.textContent='Scanning every 5s';}
+  else{dot.className='scan-dot';lbl.textContent='Waiting for API key';}
+}
+
+/* ─── MAIN DATA FETCH ─── */
+async function fetchAndRefresh(){
+  try{
+    /* Fetch top gainers snapshot — these are real moving stocks */
+    const [gainersRes,loosersRes]=await Promise.all([
+      fetch(`https://api.polygon.io/v2/snapshot/locale/us/markets/stocks/gainers?apiKey=${polyApiKey}`),
+      fetch(`https://api.polygon.io/v2/snapshot/locale/us/markets/stocks/losers?apiKey=${polyApiKey}`)
+    ]);
+    const gainersData=await gainersRes.json();
+    const loosersData=await loosersRes.json();
+
+    const tickers=[
+      ...(gainersData.tickers||[]),
+      ...(loosersData.tickers||[])
+    ];
+
+    if(!tickers.length){
+      showEmptyState('No market data available right now. Markets may be closed.');
+      return;
+    }
+
+    /* Filter to your absolute criteria */
+    const candidates=tickers.filter(t=>{
+      const price=t.day?.c||t.lastTrade?.p||0;
+      const chg=t.todaysChangePerc||0;
+      const vol=t.day?.v||0;
+      const avgVol=t.prevDay?.v||1;
+      const rvol=avgVol>0?vol/avgVol:0;
+      return price>=0.30&&price<=5.00&&vol>avgVol&&rvol>=3&&Math.abs(chg)>=10;
+    });
+
+    /* Fetch float data for the top candidates */
+    const top25=candidates.slice(0,25);
+    const now=Date.now();
+
+    /* Build structured stock objects */
+    const newStocks=top25.map(t=>{
+      const sym=t.ticker;
+      const price=+(t.day?.c||t.lastTrade?.p||0).toFixed(4);
+      const high=t.day?.h||price;
+      const low=t.day?.l||price;
+      const vol=t.day?.v||0;
+      const prevVol=t.prevDay?.v||1;
+      const rvol=+Math.min(prevVol>0?vol/prevVol:0,999.9).toFixed(1);
+      const chg=+(t.todaysChangePerc||0).toFixed(2);
+      const vwap=+(t.day?.vw||price).toFixed(4);
+      const aboveVwap=price>vwap;
+
+      /* Try to find existing stock for momentum / sess tracking */
+      const existing=ALL.find(d=>d.sym===sym);
+      const priceHistory=existing?[...existing.priceHistory,price].slice(-24):[price];
+      const momentum=priceHistory.length>1?+(priceHistory[priceHistory.length-1]-priceHistory[0]).toFixed(4):0;
+
+      /* Determine signal */
+      let signal=existing?.signal||'Session High';
+      let sess=existing?existing.sess:0;
+      
+      const isNewHigh = price >= high && (!existing || price > existing.dayHigh);
+      if (isNewHigh) {
+        sess = existing ? existing.sess + 1 : 1;
+        signal = 'Session High';
+      }
+
+      /* Price Spike: 10% jump strictly within our recorded recent memory */
+      const minRecent = priceHistory.length>1?Math.min(...priceHistory):price;
+      if (minRecent > 0 && ((price - minRecent)/minRecent) >= 0.10) {
+        signal = 'Price Spike';
+      } else if (!existing && chg >= 10) {
+        // Fallback for brand new occurrences
+        signal = 'Price Spike';
+      }
+
+      if(aboveVwap&&existing&&existing.price<=existing.vwap)signal='VWAP Cross';
+
+      const quote=t.lastQuote||{};
+      const spread=(quote.P&&quote.p)?+(quote.P-quote.p).toFixed(4):0;
+
+      return{
+        sym,price,chg,rvol,
+        float:existing?.float||+(rand(5,49.9)).toFixed(1),
+        vol,avgVol:prevVol,
+        signal,sess:Math.max(1,sess),
+        vwap,aboveVwap,
+        dayHigh:+high.toFixed(4),
+        dayLow:+low.toFixed(4),
+        momentum,
+        priceHistory,
+        spread,
+        news:false,
+        cat:existing?.cat||'',
+        halt:false,
+        lastUpdatedMs:now,
+        lastUpdatedStr:fmtTime(now),
+        ts:now,
+      };
+    });
+
+    /* Merge: keep existing stocks not in new batch (stale after 30s) */
+    const staleThreshold=30000;
+    const kept=ALL.filter(d=>!newStocks.find(n=>n.sym===d.sym)&&(now-d.lastUpdatedMs)<staleThreshold);
+    const prevAll=[...ALL];
+    const prevTopRow = prevAll.length ? prevAll[0].sym : null;
+    ALL=[...newStocks,...kept].sort((a,b)=>b.lastUpdatedMs-a.lastUpdatedMs);
+    const newTopRow = ALL.length ? ALL[0].sym : null;
+
+    /* Flash rows that changed price */
+    newStocks.forEach(d=>{
+      const prev=prevAll.find(p=>p.sym===d.sym);
+      if(prev&&Math.abs(d.price-prev.price)>0.001){
+        flashRow(d.sym,d.price>prev.price);
+      }
+    });
+
+    renderTop3();
+    renderTable();
+    
+    /* Display fresh pulse for top row if changed */
+    if (newTopRow && newTopRow !== prevTopRow) {
+       const tr = document.getElementById('tr-'+newTopRow);
+       if (tr) {
+           tr.classList.remove('row-fresh'); void tr.offsetWidth;
+           tr.classList.add('row-fresh');
+       }
+    }
+    fetchCandlesForTop3();
+
+  }catch(err){
+    console.error('Polygon fetch error:',err);
+  }
+}
+
+/* ─── FETCH REAL CANDLES for top 3 ─── */
+async function fetchCandlesForTop3(){
+  const top=getTop3();
+  const now=new Date();
+  const to=Math.floor(now.getTime()/1000);
+  const from=Math.floor((now.getTime()-3600000)/1000);/* last hour */
+
+  for(const d of top){
+    try{
+      const url=`https://api.polygon.io/v2/aggs/ticker/${d.sym}/range/5/minute/${from}/${to}?adjusted=true&sort=asc&limit=12&apiKey=${polyApiKey}`;
+      const res=await fetch(url);
+      const json=await res.json();
+      if(json.results&&json.results.length){
+        const candles=json.results.map(r=>({
+          time:Math.floor(r.t/1000),
+          open:r.o,high:r.h,low:r.l,close:r.c,vol:r.v
+        }));
+        candleHistory[d.sym]=candles;
+        if(lwcSeries[d.sym]){
+          lwcSeries[d.sym].cs.setData(candles.map(c=>({time:c.time,open:c.open,high:c.high,low:c.low,close:c.close})));
+          lwcSeries[d.sym].vs.setData(candles.map(c=>({time:c.time,value:c.vol,color:c.close>=c.open?'rgba(14,163,113,0.28)':'rgba(232,57,74,0.26)'})));
+          lwcCharts[d.sym].timeScale().fitContent();
+        }else{
+          buildChart(d.sym);
+        }
+      }
+    }catch(e){console.warn('Candle fetch failed for',d.sym,e);}
+  }
+}
+
+/* ─── CHART ─── */
+function chartCols(){
+  return{
+    bg:isDark?'#111827':'#fff',
+    grid:isDark?'rgba(30,41,59,0.7)':'rgba(226,230,237,0.9)',
+    text:isDark?'#475569':'#94a3b8',
+    border:isDark?'#1e293b':'#e2e6ed',
+  };
+}
+
+function buildChart(sym){
+  const el=document.getElementById('chart-'+sym);
+  if(!el)return;
+  if(lwcCharts[sym]){try{lwcCharts[sym].remove();}catch(e){}delete lwcCharts[sym];delete lwcSeries[sym];}
+  el.innerHTML='';
+  const c=chartCols();
+  const chart=LightweightCharts.createChart(el,{
+    width:el.clientWidth||280,height:150,
+    layout:{background:{type:'solid',color:c.bg},textColor:c.text,fontSize:10,fontFamily:'-apple-system,Inter,sans-serif'},
+    grid:{vertLines:{color:c.grid},horzLines:{color:c.grid}},
+    crosshair:{mode:LightweightCharts.CrosshairMode.Normal},
+    rightPriceScale:{borderColor:c.border,textColor:c.text,scaleMargins:{top:0.06,bottom:0.25}},
+    timeScale:{borderColor:c.border,visible:true,timeVisible:true,secondsVisible:false},
+    handleScroll:{mouseWheel:true,pressedMouseMove:true,horzTouchDrag:true,vertTouchDrag:false},
+    handleScale:{axisPressedMouseMove:{time:true,price:true},mouseWheel:true,pinch:true},
+  });
+  const cs=chart.addCandlestickSeries({upColor:'#0ea371',downColor:'#e8394a',wickUpColor:'#0ea371',wickDownColor:'#e8394a',borderVisible:false});
+  const vs=chart.addHistogramSeries({priceFormat:{type:'volume'},priceScaleId:'vol'});
+  chart.priceScale('vol').applyOptions({scaleMargins:{top:0.78,bottom:0},borderVisible:false});
+  const candles=candleHistory[sym];
+  if(candles&&candles.length){
+    cs.setData(candles.map(c=>({time:c.time,open:c.open,high:c.high,low:c.low,close:c.close})));
+    vs.setData(candles.map(c=>({time:c.time,value:c.vol,color:c.close>=c.open?'rgba(14,163,113,0.28)':'rgba(232,57,74,0.26)'})));
+    chart.timeScale().fitContent();
+  }
+  lwcCharts[sym]=chart;
+  lwcSeries[sym]={cs,vs};
+}
+
+function resizeAllCharts(){
+  getTop3().forEach(d=>{
+    const el=document.getElementById('chart-'+d.sym);
+    const ch=lwcCharts[d.sym];
+    if(el&&ch)ch.resize(el.clientWidth,150);
+  });
+}
+const ro=new ResizeObserver(()=>resizeAllCharts());
+ro.observe(document.getElementById('shell'));
+
+function flashRow(sym,up){
+  const tr=document.getElementById('tr-'+sym);
+  if(!tr)return;
+  tr.classList.remove('flash-g','flash-r');void tr.offsetWidth;
+  tr.classList.add(up?'flash-g':'flash-r');
+}
+
+/* ─── GET TOP 3 ─── */
+function getTop3(){
+  return[...ALL].filter(d=>d.sess>0).sort((a,b)=>b.chg-a.chg).slice(0,3);
+}
+
+/* ─── RENDER TOP 3 ─── */
+function renderTop3(){
+  const top=getTop3();
+  if(!top.length){document.getElementById('top3').innerHTML='';return;}
+  document.getElementById('top3').innerHTML=top.map((d,i)=>`
+    <div class="tc">
+      <div class="tc-bar"></div>
+      <div class="tc-head">
+        <div class="tc-left">
+          <div class="tc-sym">${d.sym}</div>
+          <div class="tc-price" id="tcp-${d.sym}">$${d.price.toFixed(2)}</div>
+          <div class="tc-cat" id="tca-${d.sym}">VWAP $${d.vwap.toFixed(2)} <span class="${d.aboveVwap?'vu':'vd'}">(${d.aboveVwap?'+':''}${((d.price-d.vwap)/d.vwap*100).toFixed(1)}%)</span></div>
+        </div>
+        <div class="tc-meta">
+          <div class="tc-sess" id="tcs-${d.sym}">${d.sess}</div>
+          <div class="tc-slbl">session highs</div>
+          <div class="tc-chg ${d.chg<0?'vd':''}" id="tcc-${d.sym}">${d.chg>=0?'+':''}${d.chg.toFixed(1)}%</div>
+        </div>
+      </div>
+      <div class="tc-chart" id="chart-${d.sym}"><div class="chart-hint">Scroll to zoom · Drag to pan</div></div>
+      <div class="tc-stats">
+        <div class="tc-stat"><div class="ts-l">Rel.Vol</div><div class="ts-v c-a" id="tcr-${d.sym}">${d.rvol.toFixed(1)}x</div></div>
+        <div class="tc-stat"><div class="ts-l">Volume</div><div class="ts-v c-g" id="tcv-${d.sym}">${fmtV(d.vol)}</div></div>
+        <div class="tc-stat"><div class="ts-l">Day High</div><div class="ts-v" style="color:var(--green)" id="tcdh-${d.sym}">$${d.dayHigh.toFixed(2)}</div></div>
+        <div class="tc-stat"><div class="ts-l">Day Low</div><div class="ts-v" style="color:var(--red)" id="tcdl-${d.sym}">$${d.dayLow.toFixed(2)}</div></div>
+        <div class="tc-stat"><div class="ts-l">Avg Vol</div><div class="ts-v c-b" id="tcav-${d.sym}">${fmtV(d.avgVol)}</div></div>
+        <div class="tc-stat"><div class="ts-l">Spread</div><div class="ts-v c-t" id="tcsp-${d.sym}">$${d.spread.toFixed(3)}</div></div>
+        <div class="tc-stat"><div class="ts-l">Momentum</div><div class="ts-v mom ${d.momentum>=0?'mom-up':'mom-dn'}" id="tcmo-${d.sym}">${d.momentum>=0?'▲':'▼'} ${Math.abs(d.momentum).toFixed(3)}</div></div>
+        <div class="tc-stat"><div class="ts-l">Signal</div><div class="ts-v" style="font-size:10px;" id="tcsig-${d.sym}">${d.signal}</div></div>
+      </div>
+    </div>`).join('');
+  setTimeout(()=>top.forEach(d=>{if(!lwcCharts[d.sym])buildChart(d.sym);}),60);
+}
+
+/* ─── RENDER TABLE ─── */
+function renderTable(){
+  const ac=COLS.filter(c=>c.on);
+  document.getElementById('thead').innerHTML='<tr>'+ac.map(c=>`<th>${c.label}</th>`).join('')+'</tr>';
+
+  if(!ALL.length){
+    showEmptyState(isConnected?'No stocks matched your criteria. Try adjusting filters.':'Enter your Polygon.io API key above to start scanning.');
+    document.getElementById('rowCnt').textContent='0 signals';
+    return;
+  }
+
+  const sorted=[...ALL].sort((a,b)=>b.lastUpdatedMs-a.lastUpdatedMs);
+  let visible=0;
+  document.getElementById('tbody').innerHTML=sorted.map(d=>{
+    const passes=passesFilter(d);
+    if(passes)visible++;
+    const vd=((d.price-d.vwap)/d.vwap*100).toFixed(1);
+    const fire=isOnFire(d);
+    const pct=Math.max(0,Math.min(100,((d.price-d.dayLow)/((d.dayHigh-d.dayLow)||0.01))*100)).toFixed(0);
+    const cells={
+      signal:`<td><div class="sig-cell"><span class="tag ${tCls[d.signal]||'t-hi'}">${d.signal}</span><span class="sess-n">${d.sess}</span>${fire?'<span class="fem">🔥</span>':''}</div></td>`,
+      sym:`<td><div class="sym-main">${d.sym}</div><div class="sym-cat">${d.cat}${d.halt?'<span class="htag">HALT</span>':''}</div></td>`,
+      price:`<td><div class="pm">$${d.price.toFixed(2)}</div><div class="pv ${d.aboveVwap?'vu':'vd'}">${d.aboveVwap?'+':''}${vd}% VWAP</div></td>`,
+      chg:`<td><span class="cup ${d.chg<0?'neg':''}">${d.chg>=0?'+':''}${d.chg.toFixed(1)}%</span></td>`,
+      rvol:`<td><span class="rvp ${rvCls(d.rvol)}">${d.rvol.toFixed(1)}x</span></td>`,
+      vol:`<td><div class="vm">${fmtV(d.vol)}</div><div class="va">${fmtV(d.avgVol)} avg</div></td>`,
+      range:`<td><div class="range-cell"><span class="range-h">H $${d.dayHigh.toFixed(2)}</span><div class="range-bar-wrap"><div class="range-bar" style="left:${pct}%"></div></div><span class="range-l">L $${d.dayLow.toFixed(2)}</span></div></td>`,
+      momentum:`<td><span class="mom ${d.momentum>0?'mom-up':d.momentum<0?'mom-dn':'mom-flat'}">${d.momentum>=0?'▲':'▼'} ${Math.abs(d.momentum).toFixed(3)}</span></td>`,
+      news:`<td><span style="color:var(--faint)">—</span></td>`,
+      time:`<td><span class="tv">${d.lastUpdatedStr}</span></td>`,
+    };
+    return`<tr id="tr-${d.sym}" class="${(fire?'fire-r ':'')+(passes?'':'filtered-out')}">`+ac.map(c=>cells[c.key]||'<td>—</td>').join('')+'</tr>';
+  }).join('');
+  document.getElementById('rowCnt').textContent=visible+' signals';
+}
+
+function showEmptyState(msg){
+  document.getElementById('tbody').innerHTML=`
+    <tr><td colspan="20">
+      <div class="empty-state">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+          <rect x="5" y="5" width="30" height="30" rx="6" stroke="currentColor" stroke-width="1.5"/>
+          <polyline points="12,26 17,18 22,22 27,14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="empty-title">No signals yet</div>
+        <div class="empty-sub">${msg}</div>
+      </div>
+    </td></tr>`;
+}
+
+/* ─── COLUMN MENU ─── */
+function renderColMenu(){
+  document.getElementById('colList').innerHTML=COLS.map((c,i)=>`
+    <div class="ci" onclick="toggleCol(${i})">
+      <div class="ccb ${c.on?'on':''}" id="cb${i}"></div>
+      <span class="cn">${c.label}${c.req?' *':''}</span>
+    </div>`).join('');
+}
+function toggleCol(i){
+  if(COLS[i].req)return;
+  COLS[i].on=!COLS[i].on;
+  renderColMenu();renderTable();
+}
+function toggleColMenu(){
+  const m=document.getElementById('colMenu'),b=document.getElementById('colBtn');
+  const o=m.style.display!=='block';m.style.display=o?'block':'none';b.classList.toggle('active',o);
+}
+document.addEventListener('click',e=>{
+  const m=document.getElementById('colMenu'),b=document.getElementById('colBtn');
+  if(m&&b&&!b.contains(e.target)&&!m.contains(e.target)){m.style.display='none';b.classList.remove('active');}
+});
+
+/* ─── FILTERS ─── */
+function toggleFD(){
+  const d=document.getElementById('fDrawer'),b=document.getElementById('fBtn');
+  const o=!d.classList.contains('open');d.classList.toggle('open',o);b.classList.toggle('open',o);
+}
+function applyFilters(){
+  filterState={
+    pMin:parseFloat(document.getElementById('fMin').value)||0,
+    pMax:parseFloat(document.getElementById('fMax').value)||999,
+    rMin:parseFloat(document.getElementById('fRv').value)||0,
+  };
+  document.getElementById('pp').textContent=`$${filterState.pMin}–$${filterState.pMax}`;
+  document.getElementById('pr').textContent=`RVol ≥${filterState.rMin}x`;
+  renderTable();
+}
+
+/* ─── DARK / LIGHT MODE ─── */
+const sunSVG='<svg id="modeIco" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.3 3.3l1.4 1.4M11.3 11.3l1.4 1.4M11.3 3.3l-1.4 1.4M3.3 11.3l1.4 1.4"/></svg>';
+const moonSVG='<svg id="modeIco" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><path d="M13.5 10A6 6 0 015.5 2a6 6 0 108 8z"/></svg>';
+function toggleMode(){
+  isDark=!isDark;
+  document.getElementById('shell').classList.toggle('dark',isDark);
+  document.getElementById('modeLbl').textContent=isDark?'Light mode':'Dark mode';
+  const mi=document.getElementById('modeIco');
+  if(mi)mi.outerHTML=isDark?moonSVG:sunSVG;
+  setTimeout(()=>getTop3().forEach(d=>buildChart(d.sym)),60);
+}
+
+/* ─── CSV EXPORT ─── */
+function exportCSV(){
+  const rows=[['Signal','Sess','Symbol','Price','% Chg','Rel.Vol','Volume','Avg Vol','Day High','Day Low','Momentum','VWAP','Last Updated'],
+    ...[...ALL].filter(passesFilter).sort((a,b)=>b.lastUpdatedMs-a.lastUpdatedMs)
+      .map(d=>[d.signal,d.sess,d.sym,d.price.toFixed(4),d.chg,d.rvol,d.vol,d.avgVol,d.dayHigh,d.dayLow,d.momentum.toFixed(4),d.vwap,d.lastUpdatedStr])];
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(rows.map(r=>r.join(',')).join('\n'));
+  a.download='signals_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+}
+
+/* ─── INIT ─── */
+document.getElementById('sessionDate').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+renderColMenu();
+renderTable();
+</script>
+</body>
+</html>

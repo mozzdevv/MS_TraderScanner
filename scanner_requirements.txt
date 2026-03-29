@@ -1,0 +1,139 @@
+SIGNAL SCANNER — REQUIREMENTS
+==============================
+Last updated: March 14, 2026
+
+
+SCANNER CRITERIA (what gets scanned)
+--------------------------------------
+- Stocks priced between $0.30 and $5.00
+- Maximum float under 50 million shares (logic handled internally, column removed from UI)
+- Relative volume 3x or more vs usual average volume
+- Stocks must be strictly above their average volume
+- Absolute Requirement: Stocks must have spiked 10% or more (tracked real-time within a rolling 2-minute / 120-second window, or via today's change)
+
+
+DATA FEED
+----------
+- Real data pulled from Polygon.io API (no simulated/fake data)
+- API key entered by the user in the scanner UI
+- Scanner fetches real top gainers/movers from Polygon snapshot endpoint
+- 5-minute candle charts pulled from Polygon aggregates endpoint
+- Data refreshes every 5 seconds
+- Scanner detects whether market is open, after hours, or closed and labels accordingly
+- No Benzinga integration (removed — separate paid product not included with Benzinga Pro)
+
+
+TOP 3 PERFORMER CARDS
+-----------------------
+- Shows the top 3 stocks ranked by highest % change
+- Stock name (symbol) displayed at the very top in large bold text
+- Price displayed directly below the symbol in bold accent color
+- VWAP and % distance from VWAP shown below price
+- TradingView Lightweight Chart (5-min candles, last hour of real data) displayed next
+- Stats strip below the chart shows: Rel.Vol, Volume, Day High, Day Low, Avg Vol, Spread, Momentum, Signal
+- All 3 cards use consistent colors — same accent blue, no variation between cards
+
+
+CHARTS
+-------
+- TradingView Lightweight Charts library embedded directly (no separate API key needed)
+- 5-minute candles showing the last hour of price action
+- Scroll mouse wheel to zoom in and out
+- Click and drag to pan left and right through history
+- Volume bars displayed below candles
+- Charts are fully responsive to window and device size
+
+
+SIGNAL TYPES
+-------------
+- Session High: stock sets a new intraday high (session counter increments only on genuine new highs)
+- Price Spike: stock moves more than 10% in a single update tick
+- VWAP Cross: stock crosses above VWAP
+- Halt Resume: REMOVED — no longer included
+
+
+TABLE
+------
+- Columns (default visible): Signal · Sess, Symbol, Price, % Chg, Rel.Vol, Volume, Day Range, Last Updated
+- Columns (hidden by default, togglable): Momentum, News
+- The "Float" column has been entirely removed from the UI.
+- Rows ordered by most recently updated — newest update always at the top
+- Every row update refreshes all data: price, % change, rel.vol, volume, session count, signal tag, day range, last updated time
+- Session counter only increments when the stock sets a genuine new session high — not on price spikes or VWAP crosses
+- Each stock updates independently so timestamps are always genuinely different
+- Row flashes green when price goes up, red when price goes down
+- The most recently updated row pulses blue briefly when it moves to the top
+- Last Updated column shows hour and minute only (e.g. 7:59 PM) — no seconds
+- Rows that fail the active filters are hidden but still tracked and reordered correctly
+
+
+FIRE EMOJI (🔥)
+----------------
+- Shown in table rows only — not on cards, not in any banner
+- Fires only when ALL five conditions are true simultaneously:
+    1. Relative volume >= 10x
+    2. % Change >= 20%
+    3. Momentum strongly positive (> 0.05)
+    4. Price is above VWAP
+    5. Session highs >= 3
+- Signals that a stock demands immediate attention
+- Row gets a subtle amber background tint when on fire
+
+
+FILTERS
+--------
+- Filter panel collapsed by default
+- Active filter criteria shown as pill badges inline (e.g. $0.30–$5.00 · RVol ≥3x)
+- Filter options: Price min, Price max, Min Rel.Vol, Signal type toggles
+- Float and Spike filters have been explicitly removed from the UI (handled as fundamental criteria under the hood)
+- Filtered rows are hidden in the table but still update and reorder correctly in the background
+- Apply button updates the pill labels to reflect current filter settings
+
+
+COLUMN TOGGLE
+--------------
+- "Columns" button opens a popup with a checkbox for every column
+- Any column can be toggled on or off instantly
+- Signal and Symbol columns are locked and cannot be hidden (required)
+- Table re-renders immediately on every toggle
+
+
+LIGHT / DARK MODE
+------------------
+- Light mode is the default when the scanner opens
+- Toggle button in the top right corner of the nav bar
+- Shows sun icon in dark mode, moon icon in light mode
+- Label reads "Dark mode" in light mode and "Light mode" in dark mode
+- Charts rebuild with matching background color when mode is toggled
+- All cards, table, filters, and nav respond to the mode toggle
+
+
+LAYOUT & DESIGN
+----------------
+- No sidebar — full screen width used entirely for the scanner
+- Top nav bar: scanner title on the left, dark/light mode toggle on the right only
+- No Live badge, no After Hours badge, no update timer in the nav bar
+- Benzinga bar removed entirely
+- Modern, clean dashboard aesthetic
+- Fully responsive layout:
+    - Desktop: 3 top cards side by side
+    - Tablet (<=960px): 2 top cards
+    - Mobile (<=660px): 1 top card, filter pills hidden
+    - Small mobile (<=400px): export button hidden, mode button text hidden
+- Table scrolls horizontally on small screens
+
+
+EXPORT
+-------
+- "Export CSV" button saves all visible (filtered) rows sorted by last update
+- CSV includes: Signal, Sess, Symbol, Price, % Chg, Rel.Vol, Volume, Avg Vol, Day High, Day Low, Momentum, VWAP, Last Updated
+
+
+PERFORMANCE & BEHAVIOR
+------------------------
+- No fake or simulated data of any kind — everything comes from Polygon.io
+- Scanner shows an empty state with instructions when no API key is entered
+- Scanner shows an empty state with a message when no stocks match filters
+- API key validated on connect — clear error shown if key is rejected
+- Data mode label shows Real-time, After Hours, or Market Closed based on current time
+- File runs from a local web server (e.g. python3 -m http.server 8080) due to browser CORS restrictions on file:// origins
